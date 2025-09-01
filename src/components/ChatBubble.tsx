@@ -39,14 +39,28 @@ export function ChatBubble({ message, isLoading }: ChatBubbleProps) {
             <span>Claude is thinking...</span>
           </div>
         ) : (
-          <div className="prose prose-sm max-w-none">
-            <p className="whitespace-pre-wrap m-0 leading-relaxed">
-              {message.content}
-            </p>
+        <div className="prose prose-sm max-w-none">
+          <div className="whitespace-pre-wrap leading-relaxed">
+            {message.content.includes('```') ? (
+              <div className="space-y-2">
+                {message.content.split('```').map((part, index) => 
+                  index % 2 === 0 ? (
+                    <p key={index} className="m-0">{part}</p>
+                  ) : (
+                    <div key={index} className="bg-muted/50 p-3 rounded font-mono text-sm border border-border overflow-x-auto">
+                      <code className="text-ai-primary">{part}</code>
+                    </div>
+                  )
+                )}
+              </div>
+            ) : (
+              <p className="m-0">{message.content}</p>
+            )}
             {isLoading && message.content && (
               <Loader2 className="inline h-3 w-3 animate-spin ml-1 opacity-70" />
             )}
           </div>
+        </div>
         )}
       </div>
     </div>
