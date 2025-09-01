@@ -61,7 +61,25 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// AI Chat specific colors
+				'ai-primary': 'hsl(var(--ai-primary))',
+				'ai-secondary': 'hsl(var(--ai-secondary))',
+				'ai-accent': 'hsl(var(--ai-accent))',
+				'chat-bubble-user': 'hsl(var(--chat-bubble-user))',
+				'chat-bubble-ai': 'hsl(var(--chat-bubble-ai))',
+				'primary-glow': 'hsl(var(--primary-glow))'
+			},
+			backgroundImage: {
+				'gradient-primary': 'var(--gradient-primary)',
+				'gradient-secondary': 'var(--gradient-secondary)'
+			},
+			boxShadow: {
+				'glow': 'var(--shadow-glow)',
+				'elegant': 'var(--shadow-elegant)'
+			},
+			transitionTimingFunction: {
+				'smooth': 'var(--transition-smooth)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
