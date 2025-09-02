@@ -20,9 +20,17 @@ export function ChatInterface() {
   const [canContinue, setCanContinue] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleStartCoding = () => {
+    // Focus on the input field to start coding
+    inputRef.current?.focus();
+    // Add a helpful starter message
+    setInputValue("Create a React component for ");
   };
 
   useEffect(() => {
@@ -167,11 +175,11 @@ export function ChatInterface() {
                   <Code className="mr-2 h-4 w-4" />
                   Toggle Terminal
                 </Button>
-                <Button variant="ghost" className="w-full justify-start">
+                <Button variant="ghost" className="w-full justify-start" onClick={() => setShowTerminal(true)}>
                   <Play className="mr-2 h-4 w-4" />
                   Run Code
                 </Button>
-                <Button variant="ghost" className="w-full justify-start">
+                <Button variant="ghost" className="w-full justify-start" onClick={handleStartCoding}>
                   <Sparkles className="mr-2 h-4 w-4" />
                   New Project
                 </Button>
@@ -183,7 +191,7 @@ export function ChatInterface() {
                 <h3 className="font-medium text-sm text-muted-foreground">PREVIEW</h3>
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-sm mb-2">Live Preview Ready</p>
-                  <Button size="sm" className="w-full" onClick={() => window.open(previewUrl)}>
+                  <Button size="sm" className="w-full" onClick={() => window.open(previewUrl, '_blank')}>
                     Open Preview
                   </Button>
                 </div>
@@ -219,7 +227,7 @@ export function ChatInterface() {
             Terminal
           </Button>
           {previewUrl && (
-            <Button size="sm" onClick={() => window.open(previewUrl)}>
+            <Button size="sm" onClick={() => window.open(previewUrl, '_blank')}>
               <Play className="mr-2 h-4 w-4" />
               Preview
             </Button>
@@ -249,7 +257,7 @@ export function ChatInterface() {
                   Code, build, and deploy with Gemini 2.0 Flash. Live terminal, instant previews, and full-stack development.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button variant="hero" size="lg" className="shadow-glow">
+                  <Button variant="hero" size="lg" className="shadow-glow" onClick={handleStartCoding}>
                     <Sparkles className="mr-2 h-5 w-5" />
                     Start Coding
                   </Button>
@@ -284,6 +292,7 @@ export function ChatInterface() {
               <div className="flex gap-2 md:gap-3 items-end">
                 <div className="flex-1">
                   <Input
+                    ref={inputRef}
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyPress={handleKeyPress}
