@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChatMessage, streamChatResponse } from "@/lib/claude-api";
+import { ChatMessage, streamChatResponse } from "@/lib/gemini-api";
 import { ChatBubble } from "./ChatBubble";
 import { CodeTerminal } from "./CodeTerminal";
 import { Send, Sparkles, Code, Play, Menu, X } from "lucide-react";
@@ -16,6 +16,8 @@ export function ChatInterface() {
   const [showTerminal, setShowTerminal] = useState(false);
   const [previewUrl, setPreviewUrl] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [tokenLimitReached, setTokenLimitReached] = useState(false);
+  const [canContinue, setCanContinue] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -32,6 +34,36 @@ export function ChatInterface() {
     return codeKeywords.some(keyword => message.toLowerCase().includes(keyword));
   };
 
+  const handleContinueGeneration = async () => {
+    if (!canContinue || isLoading) return;
+    
+    setIsLoading(true);
+    setCanContinue(false);
+    setTokenLimitReached(false);
+
+    try {
+      let assistantContent = messages[messages.length - 1]?.content || "";
+      
+      // Continue from where we left off
+      for await (const chunk of streamChatResponse(messages)) {
+        assistantContent += chunk;
+        
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = { 
+            role: "assistant", 
+            content: assistantContent 
+          };
+          return updated;
+        });
+      }
+    } catch (error) {
+      console.error("Continue error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
@@ -42,6 +74,8 @@ export function ChatInterface() {
     const currentInput = inputValue;
     setInputValue("");
     setIsLoading(true);
+    setTokenLimitReached(false);
+    setCanContinue(false);
 
     // Check if this is a coding request
     const isCodeRequest = detectCodeRequest(currentInput);
@@ -55,9 +89,18 @@ export function ChatInterface() {
       setMessages([...newMessages, assistantMessage]);
 
       let assistantContent = "";
+      let chunkCount = 0;
       
       for await (const chunk of streamChatResponse(newMessages)) {
         assistantContent += chunk;
+        chunkCount++;
+        
+        // Simulate token limit after many chunks
+        if (chunkCount > 100 && Math.random() > 0.7) {
+          setTokenLimitReached(true);
+          setCanContinue(true);
+          break;
+        }
         
         // Update the last message with streaming content
         setMessages(prev => {
@@ -158,7 +201,7 @@ export function ChatInterface() {
       <div className="flex items-center justify-between p-4 border-b bg-card/80 backdrop-blur-sm md:hidden">
         <MobileMenu />
         <h1 className="text-lg font-semibold bg-gradient-primary bg-clip-text text-transparent">
-          Claude Agent
+          Gemini Coder
         </h1>
         <Button variant="ghost" size="icon" onClick={() => setShowTerminal(!showTerminal)}>
           <Code className="h-5 w-5" />
@@ -168,7 +211,7 @@ export function ChatInterface() {
       {/* Desktop Header */}
       <div className="hidden md:flex items-center justify-between p-4 border-b bg-card/80 backdrop-blur-sm">
         <h1 className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-          Claude Sonnet 3.7 - AI Coding Assistant
+          Gemini 2.0 Flash - AI Coding Platform
         </h1>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setShowTerminal(!showTerminal)}>
@@ -200,10 +243,10 @@ export function ChatInterface() {
                   <div className="absolute inset-0 bg-gradient-primary opacity-20 rounded-2xl" />
                 </div>
                 <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold mb-4 md:mb-6 bg-gradient-primary bg-clip-text text-transparent">
-                  AI Coding Assistant
+                  Vibe Coder Platform
                 </h1>
                 <p className="text-lg md:text-xl text-muted-foreground mb-6 md:mb-8 px-4">
-                  Code, build, and deploy with Claude Sonnet 3.7. Live terminal, instant previews, and intelligent assistance.
+                  Code, build, and deploy with Gemini 2.0 Flash. Live terminal, instant previews, and full-stack development.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button variant="hero" size="lg" className="shadow-glow">
@@ -261,10 +304,24 @@ export function ChatInterface() {
               </div>
               
               {/* Continue Button for Token Limits */}
-              {isLoading && (
+              {(canContinue || tokenLimitReached) && !isLoading && (
+                <div className="flex justify-center mt-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleContinueGeneration}
+                    className="bg-ai-primary/10 border-ai-primary text-ai-primary hover:bg-ai-primary hover:text-white transition-all shadow-glow"
+                  >
+                    <Play className="h-3 w-3 mr-2" />
+                    Continue Generation
+                  </Button>
+                </div>
+              )}
+              
+              {isLoading && !canContinue && (
                 <div className="flex justify-center mt-2">
                   <Button variant="outline" size="sm" disabled>
-                    Continue Generation...
+                    Generating...
                   </Button>
                 </div>
               )}

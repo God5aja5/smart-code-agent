@@ -1,4 +1,4 @@
-import { ChatMessage } from "@/lib/claude-api";
+import { ChatMessage } from "@/lib/gemini-api";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, Bot, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -36,7 +36,7 @@ export function ChatBubble({ message, isLoading }: ChatBubbleProps) {
         {isLoading && !message.content ? (
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Claude is thinking...</span>
+            <span>Gemini is thinking...</span>
           </div>
         ) : (
         <div className="prose prose-sm max-w-none">
