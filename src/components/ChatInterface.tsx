@@ -2,11 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChatMessage, streamChatResponse } from "@/lib/gemini-api";
+import { ChatMessage, streamChatResponse, extractCodeFromResponse } from "@/lib/gemini-api";
+import { fileManager } from "@/lib/file-manager";
+import { codeExecutor } from "@/lib/code-executor";
 import { ChatBubble } from "./ChatBubble";
 import { CodeTerminal } from "./CodeTerminal";
 import { Send, Sparkles, Code, Play, Menu, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { toast } from "sonner";
 import heroImage from "@/assets/chat-hero.jpg";
 
 export function ChatInterface() {
@@ -121,10 +124,36 @@ export function ChatInterface() {
         });
       }
 
+      // Process AI response and auto-create files if code is detected
+      if (isCodeRequest && assistantContent) {
+        const codeBlocks = extractCodeFromResponse(assistantContent);
+        if (codeBlocks.length > 0) {
+          const createdFiles = fileManager.createFilesFromCode(codeBlocks);
+          if (createdFiles.length > 0) {
+            toast.success(`Created ${createdFiles.length} file(s): ${createdFiles.join(', ')}`);
+            
+            // Auto-run development server
+            setTimeout(async () => {
+              try {
+                const result = await codeExecutor.executeCommand("npm run dev");
+                if (result.previewUrl) {
+                  setPreviewUrl(result.previewUrl);
+                  toast.success("🚀 Development server started!");
+                }
+              } catch (error) {
+                console.error("Auto-run dev server error:", error);
+              }
+            }, 1000);
+          }
+        }
+      }
+
       // If it was a code request, simulate creating a preview
       if (isCodeRequest) {
         setTimeout(() => {
-          setPreviewUrl(`https://preview-${Date.now()}.lovable.dev`);
+          if (!previewUrl) {
+            setPreviewUrl(`https://preview-${Date.now()}.lovable.dev`);
+          }
         }, 2000);
       }
     } catch (error) {

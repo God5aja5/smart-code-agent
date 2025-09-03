@@ -16,6 +16,13 @@ export interface GeminiResponse {
   }>;
 }
 
+// Code extraction and file management
+export interface ExtractedCode {
+  filename: string;
+  content: string;
+  language: string;
+}
+
 // Enhanced mock responses for coding-focused platform
 const mockResponses = {
   greeting: [
@@ -26,11 +33,9 @@ const mockResponses = {
   ],
   coding: [
     "I'll help you build that! Let me create the code structure and set up a live preview for you.\n\n",
-    "Creating project files...\n",
-    "Setting up development environment...\n",
-    "Installing dependencies...\n",
-    "Starting development server...\n\n",
-    "✅ Your application is ready! Check the terminal for live updates and use the preview button to see your app."
+    "```tsx\n// Component.tsx\nimport React from 'react';\n\nconst Component = () => {\n  return (\n    <div className=\"p-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white\">\n      <h1 className=\"text-4xl font-bold mb-4\">Hello Vibe Coder!</h1>\n      <p className=\"text-xl\">Built with Gemini 2.0 Flash ⚡</p>\n    </div>\n  );\n};\n\nexport default Component;\n```\n\n",
+    "```tsx\n// App.tsx\nimport React from 'react';\nimport Component from './Component';\n\nfunction App() {\n  return (\n    <div className=\"min-h-screen bg-gray-100\">\n      <Component />\n    </div>\n  );\n}\n\nexport default App;\n```\n\n",
+    "✅ Files created! Check the terminal for live updates and use the preview button to see your app."
   ],
   general: [
     "That's a great question! As Gemini 2.0 Flash, I can help you with coding, development, and much more. ",
@@ -38,6 +43,46 @@ const mockResponses = {
     "What specific project or feature would you like to work on?"
   ]
 };
+
+// Extract code blocks from AI response
+export function extractCodeFromResponse(response: string): ExtractedCode[] {
+  const codeBlocks: ExtractedCode[] = [];
+  const codeBlockRegex = /```(\w+)?\n(.*?)\n```/gs;
+  let match;
+
+  while ((match = codeBlockRegex.exec(response)) !== null) {
+    const language = match[1] || 'javascript';
+    const content = match[2];
+    
+    // Try to extract filename from comments
+    const filenameMatch = content.match(/\/\/\s*([A-Za-z0-9_./-]+\.(tsx?|jsx?|css|html|json))/);
+    let filename = 'generated-file';
+    
+    if (filenameMatch) {
+      filename = filenameMatch[1];
+    } else {
+      // Generate filename based on language
+      const extensions: { [key: string]: string } = {
+        'tsx': '.tsx',
+        'typescript': '.ts', 
+        'jsx': '.jsx',
+        'javascript': '.js',
+        'css': '.css',
+        'html': '.html',
+        'json': '.json'
+      };
+      filename = `generated-${Date.now()}${extensions[language] || '.txt'}`;
+    }
+    
+    codeBlocks.push({
+      filename,
+      content: content.trim(),
+      language
+    });
+  }
+  
+  return codeBlocks;
+}
 
 async function* mockStreamResponse(message: string): AsyncGenerator<string> {
   // Detect message type and choose appropriate response

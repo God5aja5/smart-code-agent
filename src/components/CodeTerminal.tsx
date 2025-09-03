@@ -5,17 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Play, Square, Terminal, Globe, Code, FileText, Loader2, Save, Download, Upload, GitBranch } from "lucide-react";
+import { fileManager, FileItem } from "@/lib/file-manager";
+import { codeExecutor } from "@/lib/code-executor";
+import { toast } from "sonner";
 
 interface CodeTerminalProps {
   previewUrl: string;
   onPreviewUpdate: (url: string) => void;
-}
-
-interface FileItem {
-  name: string;
-  type: "file" | "folder";
-  content?: string;
-  language?: string;
 }
 
 export function CodeTerminal({ previewUrl, onPreviewUpdate }: CodeTerminalProps) {
@@ -27,17 +23,23 @@ export function CodeTerminal({ previewUrl, onPreviewUpdate }: CodeTerminalProps)
     ""
   ]);
   const [currentCommand, setCurrentCommand] = useState("");
-  const [activeFile, setActiveFile] = useState("App.tsx");
-  const [files, setFiles] = useState<FileItem[]>([
-    { name: "src", type: "folder" },
-    { name: "App.tsx", type: "file", language: "typescript", content: `import React from 'react';\nimport './App.css';\n\nfunction App() {\n  return (\n    <div className="App">\n      <header className="App-header">\n        <h1>Hello Vibe Coder!</h1>\n        <p>Built with Gemini 2.0 Flash</p>\n      </header>\n    </div>\n  );\n}\n\nexport default App;` },
-    { name: "main.tsx", type: "file", language: "typescript", content: `import React from 'react'\nimport ReactDOM from 'react-dom/client'\nimport App from './App.tsx'\nimport './index.css'\n\nReactDOM.createRoot(document.getElementById('root')!).render(\n  <React.StrictMode>\n    <App />\n  </React.StrictMode>,\n)` },
-    { name: "package.json", type: "file", language: "json", content: `{\n  "name": "vibe-coder-app",\n  "private": true,\n  "version": "1.0.0",\n  "type": "module",\n  "scripts": {\n    "dev": "vite",\n    "build": "vite build",\n    "preview": "vite preview"\n  },\n  "dependencies": {\n    "react": "^18.3.1",\n    "react-dom": "^18.3.1"\n  },\n  "devDependencies": {\n    "@vitejs/plugin-react": "^4.0.0",\n    "vite": "^4.4.0"\n  }\n}` },
-    { name: "index.html", type: "file", language: "html", content: `<!doctype html>\n<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n    <title>Vibe Coder App</title>\n  </head>\n  <body>\n    <div id="root"></div>\n    <script type="module" src="/src/main.tsx"></script>\n  </body>\n</html>` }
-  ]);
+  const [activeFile, setActiveFile] = useState("src/App.tsx");
+  const [files, setFiles] = useState<FileItem[]>([]);
   const terminalRef = useRef<HTMLDivElement>(null);
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+
+  // Subscribe to file manager changes
+  useEffect(() => {
+    const updateFiles = () => {
+      setFiles(fileManager.getAllFiles());
+    };
+    
+    updateFiles(); // Initial load
+    const unsubscribe = fileManager.subscribe(updateFiles);
+    
+    return unsubscribe;
+  }, []);
 
   const executeCommand = async (command: string) => {
     if (!command.trim()) return;
@@ -47,112 +49,30 @@ export function CodeTerminal({ previewUrl, onPreviewUpdate }: CodeTerminalProps)
     setHistoryIndex(-1);
     setTerminalOutput(prev => [...prev, `$ ${command}`]);
     
-    // Simulate command execution with enhanced responses
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const responses: { [key: string]: string[] } = {
-      "npm install": [
-        "📦 Installing dependencies...",
-        "⬇️  react@18.3.1",
-        "⬇️  typescript@5.0.0", 
-        "⬇️  vite@4.4.0",
-        "⬇️  @vitejs/plugin-react@4.0.0",
-        "🔧 Building dependency tree...",
-        "✅ Added 847 packages in 12.3s",
-        "🎉 Installation complete!"
-      ],
-      "npm run build": [
-        "🔨 Building for production...",
-        "📦 Bundling with Vite...",
-        "🔍 Analyzing bundle size...",
-        "✅ dist/index.html                2.1 kB",
-        "✅ dist/assets/index-a1b2c3d4.js  143.2 kB │ gzip: 46.1 kB",
-        "✅ dist/assets/index-e5f6g7h8.css  5.8 kB │ gzip: 1.9 kB",
-        "🚀 Build completed in 8.7s",
-        "💫 Ready for deployment!"
-      ],
-      "npm run dev": [
-        "🔥 Starting Vite development server...",
-        "🌐 Vite v4.4.0 ready in 1.2s",
-        "📡 ➜ Local:   http://localhost:5173/",
-        "📡 ➜ Network: http://192.168.1.100:5173/",
-        "✨ Server ready - watching for changes..."
-      ],
-      "git init": [
-        "🔧 Initialized empty Git repository in /project/.git/",
-        "📋 Default branch set to 'main'",
-        "✅ Repository ready for commits"
-      ],
-      "git add .": [
-        "📁 Staging all files...",
-        "✅ Files staged for commit"
-      ],
-      "git commit -m": [
-        "💾 Creating commit...",
-        "✅ [main abc1234] Initial commit",
-        "📝 4 files changed, 127 insertions(+)"
-      ],
-      "yarn install": [
-        "🧶 Installing with Yarn...",
-        "📦 Resolving packages...",
-        "✅ Done in 8.4s"
-      ],
-      "ls": [
-        "📁 src/",
-        "📄 package.json",
-        "📄 vite.config.ts", 
-        "📄 index.html",
-        "📄 README.md"
-      ],
-      "help": [
-        "🤖 Gemini Vibe Coder Terminal Commands:",
-        "📦 npm install - Install dependencies",
-        "🔨 npm run build - Build for production", 
-        "🔥 npm run dev - Start dev server",
-        "🌿 git init - Initialize repository",
-        "📁 ls - List files",
-        "🧹 clear - Clear terminal",
-        "❓ help - Show this help"
-      ],
-      "clear": [],
-      "default": [
-        "⚡ Executing command...",
-        `✅ '${command}' completed successfully`,
-        "🔄 Process finished with exit code 0"
-      ]
-    };
-
-    let response = responses[command] || responses["default"];
-    
-    // Special handling for commands with arguments
-    if (command.startsWith("git commit -m")) {
-      response = responses["git commit -m"];
-    }
-    
-    if (command === "clear") {
-      setTerminalOutput([
-        "🚀 Gemini Vibe Coder Terminal v2.0.0",
-        "💫 AI-powered development environment ready",
-        ""
-      ]);
-      setIsRunning(false);
-      return;
-    }
-    
-    for (const line of response) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      setTerminalOutput(prev => [...prev, line]);
+    try {
+      const result = await codeExecutor.executeCommand(command);
+      
+      // Add output to terminal
+      result.output.forEach(line => {
+        setTerminalOutput(prev => [...prev, line]);
+      });
+      
+      // Update preview URL if provided
+      if (result.previewUrl) {
+        onPreviewUpdate(result.previewUrl);
+        toast.success("🚀 Live preview is ready!");
+      }
+      
+      if (result.error) {
+        toast.error(`Command failed: ${result.error}`);
+      }
+    } catch (error) {
+      setTerminalOutput(prev => [...prev, `❌ Error: ${error}`]);
+      toast.error("Command execution failed");
     }
     
     setTerminalOutput(prev => [...prev, ""]);
     setIsRunning(false);
-
-    // Auto-generate preview URL for dev server
-    if (command === "npm run dev" && !previewUrl) {
-      setTimeout(() => {
-        onPreviewUpdate(`https://vibe-app-${Date.now()}.lovable.dev`);
-      }, 1000);
-    }
   };
 
   const runAutomaticSequence = async () => {
@@ -209,6 +129,19 @@ export function CodeTerminal({ previewUrl, onPreviewUpdate }: CodeTerminalProps)
     if (filename.endsWith('.css')) return 'css';
     if (filename.endsWith('.json')) return 'json';
     return 'text';
+  };
+
+  const getCurrentFileContent = (): string => {
+    const file = files.find(f => f.path === activeFile || f.name === activeFile);
+    return file?.content || "// Select a file to view its content";
+  };
+
+  const updateFileContent = (content: string) => {
+    const file = files.find(f => f.path === activeFile || f.name === activeFile);
+    if (file?.path) {
+      fileManager.updateFile(file.path, content);
+      toast.success("File updated!");
+    }
   };
 
   useEffect(() => {
@@ -362,14 +295,14 @@ export function CodeTerminal({ previewUrl, onPreviewUpdate }: CodeTerminalProps)
         </TabsContent>
 
         <TabsContent value="editor" className="flex-1 flex flex-col mt-0">
-          <div className="flex items-center gap-2 p-2 border-b bg-muted/20">
+          <div className="flex items-center gap-2 p-2 border-b bg-muted/20 overflow-x-auto">
             {files.filter(f => f.type === "file").map((file) => (
               <Button
-                key={file.name}
-                variant={activeFile === file.name ? "default" : "ghost"}
+                key={file.path || file.name}
+                variant={activeFile === (file.path || file.name) ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setActiveFile(file.name)}
-                className={`text-xs ${activeFile === file.name ? 'bg-ai-primary/20 border-ai-primary' : ''}`}
+                onClick={() => setActiveFile(file.path || file.name)}
+                className={`text-xs whitespace-nowrap ${activeFile === (file.path || file.name) ? 'bg-ai-primary/20 border-ai-primary' : ''}`}
               >
                 {getFileIcon(file)} {file.name}
               </Button>
@@ -380,10 +313,10 @@ export function CodeTerminal({ previewUrl, onPreviewUpdate }: CodeTerminalProps)
             <div className="h-full bg-background rounded border p-4 font-mono text-sm overflow-auto">
               <div className="flex items-center justify-between mb-4">
                 <div className="text-muted-foreground text-xs">
-                  {activeFile} - {getLanguageFromFile(activeFile)}
+                  {files.find(f => f.path === activeFile || f.name === activeFile)?.name || 'No file selected'} - {getLanguageFromFile(activeFile)}
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline">
+                  <Button size="sm" variant="outline" onClick={() => updateFileContent(getCurrentFileContent())}>
                     <Save className="h-3 w-3 mr-1" />
                     Save
                   </Button>
@@ -395,7 +328,7 @@ export function CodeTerminal({ previewUrl, onPreviewUpdate }: CodeTerminalProps)
               </div>
               
               <div className="text-foreground leading-relaxed whitespace-pre-wrap">
-                {files.find(f => f.name === activeFile)?.content || "// File content will appear here"}
+                {getCurrentFileContent()}
               </div>
             </div>
           </div>
@@ -420,14 +353,14 @@ export function CodeTerminal({ previewUrl, onPreviewUpdate }: CodeTerminalProps)
             <div className="space-y-1 text-sm">
               {files.map((file, index) => (
                 <div 
-                  key={index}
+                  key={file.path || file.name}
                   className={`flex items-center gap-3 p-3 rounded hover:bg-muted/50 cursor-pointer transition-colors ${
-                    file.name === activeFile ? 'bg-ai-primary/10 border border-ai-primary/20' : ''
+                    (file.path || file.name) === activeFile ? 'bg-ai-primary/10 border border-ai-primary/20' : ''
                   }`}
-                  onClick={() => file.type === "file" && setActiveFile(file.name)}
+                  onClick={() => file.type === "file" && setActiveFile(file.path || file.name)}
                 >
                   <span className="text-lg">{getFileIcon(file)}</span>
-                  <span className="flex-1">{file.name}</span>
+                  <span className="flex-1">{file.path || file.name}</span>
                   {file.type === "file" && (
                     <Badge variant="secondary" className="text-xs">
                       {getLanguageFromFile(file.name)}
