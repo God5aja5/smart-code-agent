@@ -7,7 +7,7 @@ import { fileManager } from "@/lib/file-manager";
 import { codeExecutor } from "@/lib/code-executor";
 import { ChatBubble } from "./ChatBubble";
 import { CodeTerminal } from "./CodeTerminal";
-import { Send, Sparkles, Code, Play, Menu, X } from "lucide-react";
+import { Send, Sparkles, Code, Play, Menu, X, Terminal, Globe } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import heroImage from "@/assets/chat-hero.jpg";
@@ -130,20 +130,30 @@ export function ChatInterface() {
         if (codeBlocks.length > 0) {
           const createdFiles = fileManager.createFilesFromCode(codeBlocks);
           if (createdFiles.length > 0) {
-            toast.success(`Created ${createdFiles.length} file(s): ${createdFiles.join(', ')}`);
+            toast.success(`✅ Created ${createdFiles.length} file(s): ${createdFiles.join(', ')}`);
             
-            // Auto-run development server
+            // Auto-execute terminal commands sequence
             setTimeout(async () => {
               try {
+                // Run install first
+                await codeExecutor.executeCommand("npm install");
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Then build
+                await codeExecutor.executeCommand("npm run build");
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Finally start dev server
                 const result = await codeExecutor.executeCommand("npm run dev");
                 if (result.previewUrl) {
                   setPreviewUrl(result.previewUrl);
-                  toast.success("🚀 Development server started!");
+                  toast.success("🚀 Live preview ready! Click Preview to see your app.");
                 }
               } catch (error) {
-                console.error("Auto-run dev server error:", error);
+                console.error("Auto-run commands error:", error);
+                toast.error("Failed to auto-run commands. Use terminal manually.");
               }
-            }, 1000);
+            }, 500);
           }
         }
       }
@@ -316,7 +326,7 @@ export function ChatInterface() {
           )}
 
           {/* Input Area - Fixed at bottom */}
-          <div className="border-t border-border bg-card/95 backdrop-blur-sm p-4 safe-area-bottom">
+          <div className="border-t border-border bg-card/95 backdrop-blur-sm p-4 pb-20 md:pb-4">
             <div className="max-w-4xl mx-auto">
               <div className="flex gap-2 md:gap-3 items-end">
                 <div className="flex-1">
@@ -373,6 +383,46 @@ export function ChatInterface() {
             <CodeTerminal previewUrl={previewUrl} onPreviewUpdate={setPreviewUrl} />
           </div>
         )}
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border safe-area-bottom z-50">
+        <div className="flex items-center justify-around py-2">
+          <Button
+            variant="ghost"
+            size="lg"
+            className="flex flex-col gap-1 h-auto py-3 px-6"
+            onClick={() => {
+              // Focus chat input
+              inputRef.current?.focus();
+            }}
+          >
+            <Terminal className="h-5 w-5" />
+            <span className="text-xs">Chat</span>
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="lg"
+            className="flex flex-col gap-1 h-auto py-3 px-6"
+            onClick={() => setShowTerminal(true)}
+          >
+            <Code className="h-5 w-5" />
+            <span className="text-xs">Terminal</span>
+          </Button>
+          
+          {previewUrl && (
+            <Button
+              variant="ghost"
+              size="lg"
+              className="flex flex-col gap-1 h-auto py-3 px-6"
+              onClick={() => window.open(previewUrl, '_blank')}
+            >
+              <Globe className="h-5 w-5" />
+              <span className="text-xs">Preview</span>
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Terminal Modal - Mobile */}

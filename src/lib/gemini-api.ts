@@ -33,9 +33,12 @@ const mockResponses = {
   ],
   coding: [
     "I'll help you build that! Let me create the code structure and set up a live preview for you.\n\n",
-    "```tsx\n// Component.tsx\nimport React from 'react';\n\nconst Component = () => {\n  return (\n    <div className=\"p-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white\">\n      <h1 className=\"text-4xl font-bold mb-4\">Hello Vibe Coder!</h1>\n      <p className=\"text-xl\">Built with Gemini 2.0 Flash ⚡</p>\n    </div>\n  );\n};\n\nexport default Component;\n```\n\n",
-    "```tsx\n// App.tsx\nimport React from 'react';\nimport Component from './Component';\n\nfunction App() {\n  return (\n    <div className=\"min-h-screen bg-gray-100\">\n      <Component />\n    </div>\n  );\n}\n\nexport default App;\n```\n\n",
-    "✅ Files created! Check the terminal for live updates and use the preview button to see your app."
+    "```tsx\n// Component.tsx\nimport React from 'react';\n\nconst Component = () => {\n  return (\n    <div className=\"p-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg\">\n      <h1 className=\"text-4xl font-bold mb-4\">🚀 Hello Vibe Coder!</h1>\n      <p className=\"text-xl mb-4\">Built with Gemini 2.0 Flash ⚡</p>\n      <button className=\"bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors\">\n        Get Started\n      </button>\n    </div>\n  );\n};\n\nexport default Component;\n```\n\n",
+    "```tsx\n// App.tsx\nimport React from 'react';\nimport Component from './Component';\n\nfunction App() {\n  const [count, setCount] = React.useState(0);\n\n  return (\n    <div className=\"min-h-screen bg-gray-100 flex items-center justify-center p-4\">\n      <div className=\"max-w-md w-full\">\n        <Component />\n        <div className=\"mt-6 text-center\">\n          <button \n            onClick={() => setCount(count + 1)}\n            className=\"bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition-colors\"\n          >\n            Count: {count}\n          </button>\n        </div>\n      </div>\n    </div>\n  );\n}\n\nexport default App;\n```\n\n",
+    "✅ Files created! Running setup commands...\n",
+    "📦 Installing dependencies...\n", 
+    "🔥 Starting development server...\n",
+    "🚀 Preview ready! Your app is now live with interactive components."
   ],
   general: [
     "That's a great question! As Gemini 2.0 Flash, I can help you with coding, development, and much more. ",
